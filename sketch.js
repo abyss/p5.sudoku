@@ -11,9 +11,13 @@ function setup() {
     
     sudokuBoard.generateStructure();
 
-    sudokuBoard.forEachCell((cell, x, y, i) => {
-        cell.value = floor(random(9) + 1);
-        cell.mutable = (random() < 0.60) ? true : false;
+    sudokuBoard.forEachCell((cell) => {
+        let mutable = (random() < 0.70) ? true : false
+
+        if (!mutable) { 
+            cell.value = floor(random(9) + 1);
+            cell.mutable = false;
+        }
     });
 
 }
