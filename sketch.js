@@ -36,7 +36,6 @@ function mousePressed() {
     return false; // To prevent any default behavior for this event
 }
 
-function keyTyped() {
-    sudokuBoard.keyTyped();
-    return false;
+function keyPressed() {
+    return sudokuBoard.keyPressed();
 }

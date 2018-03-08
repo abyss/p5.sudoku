@@ -116,18 +116,36 @@ class VisualSudokuBoard extends SudokuBoard {
         redraw();
     }
 
-    keyTyped() {
-        let upperKey = key.toUpperCase();
+    keyPressed() {
+        let didSomething = false;
 
-        if (this.possibleValues.indexOf(upperKey) > -1) {
+        if (keyCode === BACKSPACE || keyCode === DELETE) {
             this.forEachCell((cell) => {
                 if (cell.selected && cell.mutable) {
-                    cell.value = upperKey;
+                    cell.value = '';
                 }
             });
+            didSomething = true;
         }
 
-        redraw();
+        // keyPressed() doens't differentiate between upper and lower. ideal!
+        if (this.possibleValues.indexOf(key) > -1) {
+            this.forEachCell((cell) => {
+                if (cell.selected && cell.mutable) {
+                    cell.value = key;
+                }
+            });
+            didSomething = true;
+        }
+
+        // returning false makes the browser ignore it incase of other functionality
+        if (didSomething) {
+            redraw();
+            return false;
+        } else {
+            // if we did nothing, let the browser handle the key
+            return true;
+        }
     }
 
     draw() {
