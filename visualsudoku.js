@@ -128,7 +128,7 @@ class VisualSudokuBoard extends SudokuBoard {
             didSomething = true;
         }
 
-        // keyPressed() doens't differentiate between upper and lower. ideal!
+        // keyPressed() doesn't differentiate between upper and lower. ideal!
         if (this.possibleValues.indexOf(key) > -1) {
             this.forEachCell((cell) => {
                 if (cell.selected && cell.mutable) {
