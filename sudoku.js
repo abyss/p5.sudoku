@@ -1,9 +1,11 @@
 'use strict';
 
 class Cell {
-    constructor(x, y, initialValue = 0) {
+    constructor(x, y, z, initialValue = 0) {
         this.x = x;
         this.y = y;
+        this.z = z;
+
         this.mutable = true;
 
         if (initialValue) {
@@ -38,23 +40,26 @@ class SudokuBoard {
         this.rowDivideEvery = rowDivideEvery;
     }
 
-    generateCell(x, y, initialValue) {
-        return new Cell(x, y, initialValue);
+    generateCell(x, y, z, initialValue) {
+        return new Cell(x, y, z, initialValue);
     }
 
     generateStructure() {
         this.cells = [];
-        this.forEachCell((cell, x, y) => {
-            this.cells.push(this.generateCell(x, y))
-        });
+
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                // i = x + (y * this.cols);
+                let z = 0; // TODO: this will store the group number this cell is in
+                this.cells.push(this.generateCell(x, y, z));
+            }
+        }
     }
 
     forEachCell(callback) {
-        for (let y = 0; y < this.rows; y++) {
-            for (let x = 0; x < this.cols; x++) {
-                let i = x + (y * this.cols);
-                callback(this.cells[i], x, y, i);
-            }
+        for (let i = 0; i < this.cols * this.rows; i++) {
+            let cell = this.cells[i];
+            callback(cell);
         }
     }
 

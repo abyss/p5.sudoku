@@ -7,19 +7,19 @@ const POSSIBLE_VALUES = [
 ];
 
 class VisualCell extends Cell {
-    constructor(x, y, initialValue = 0, style) {
-        super(x, y, initialValue = 0);
+    constructor(x, y, z, initialValue = 0, style) {
+        super(x, y, z, initialValue = 0);
         this.style = style;
 
-        this.x = 0;
-        this.y = 0;
+        this.visualX = 0;
+        this.visualY = 0;
         this.mouseOver = false;
         this.selected = false;
     }
 
     setCoords(x, y) {
-        this.x = x;
-        this.y = y;
+        this.visualX = x;
+        this.visualY = y;
     }
 
     draw() {
@@ -33,13 +33,13 @@ class VisualCell extends Cell {
         stroke(ts.borderColor);
         strokeWeight(ts.borderSize);
 
-        rect(this.x, this.y, ts.cellSize, ts.cellSize);
+        rect(this.visualX, this.visualY, ts.cellSize, ts.cellSize);
         textAlign(CENTER, CENTER);
 
         noStroke();
         fill(textColor);
         textSize(ts.fontSize);
-        text(this.value, this.x + (ts.cellSize / 2), this.y + (ts.cellSize / 2));
+        text(this.value, this.visualX + (ts.cellSize / 2), this.visualY + (ts.cellSize / 2));
     }
 }
 
@@ -47,6 +47,8 @@ class VisualSudokuBoard extends SudokuBoard {
     constructor(cols, rows, columnDivideEvery, rowDivideEvery, styleOptions) {
         super(cols, rows, columnDivideEvery, rowDivideEvery);
 
+        this.selectedCell = -1; // nothing selected
+        
         this.style = this.defaultStyle();
         this.overrideStyle(styleOptions);
 
@@ -88,8 +90,8 @@ class VisualSudokuBoard extends SudokuBoard {
     mouseMoved() {
         this.forEachCell((cell) => {
             let cellSize = cell.style.cellSize;
-            if (mouseX > cell.x && mouseX < cell.x + cellSize &&
-                mouseY > cell.y && mouseY < cell.y + cellSize) {
+            if (mouseX > cell.visualX && mouseX < cell.visualX + cellSize &&
+                mouseY > cell.visualY && mouseY < cell.visualY + cellSize) {
 
                 if (cell.mutable) {
                     cell.mouseOver = true;
@@ -103,13 +105,11 @@ class VisualSudokuBoard extends SudokuBoard {
     }
 
     mousePressed() {
+        this.unselectCell();
+
         this.forEachCell((cell) => {
             if (cell.mouseOver) {
-                if (cell.mutable) {
-                    cell.selected = true;
-                }
-            } else {
-                cell.selected = false;
+                this.selectCell(cell.x, cell.y);
             }
         });
 
@@ -117,7 +117,8 @@ class VisualSudokuBoard extends SudokuBoard {
     }
 
     keyPressed() {
-        let didSomething = false;
+        // returning false makes the browser ignore it incase of other functionality        
+        let browserIgnore = false;
 
         if (keyCode === BACKSPACE || keyCode === DELETE) {
             this.forEachCell((cell) => {
@@ -125,7 +126,12 @@ class VisualSudokuBoard extends SudokuBoard {
                     cell.value = '';
                 }
             });
-            didSomething = true;
+            browserIgnore = true;
+        }
+
+        if (keyCode === TAB) {
+            this.selectCell(this.getNextMutable(this.selectedCell));
+            browserIgnore = true;
         }
 
         // keyPressed() doesn't differentiate between upper and lower. ideal!
@@ -135,16 +141,54 @@ class VisualSudokuBoard extends SudokuBoard {
                     cell.value = key;
                 }
             });
-            didSomething = true;
+            browserIgnore = true;
         }
 
-        // returning false makes the browser ignore it incase of other functionality
-        if (didSomething) {
+        // check for browser ignoring behavior
+        if (browserIgnore) {
             redraw();
             return false;
         } else {
             // if we did nothing, let the browser handle the key
             return true;
+        }
+    }
+
+    selectCell(x, y = -1) {
+        // if only x is provided, use it as the cell's index
+        // otherwise use x, y
+        
+        this.unselectCell();
+
+        let i;
+        if (y < 0) {
+            i = x;
+        } else {
+            i = (this.cols * y) + x;
+        }
+
+        this.cells[i].selected = true;
+        this.selectedCell = i;
+    }
+
+    unselectCell() {
+        if (this.selectedCell >= 0) {
+            this.cells[this.selectedCell].selected = false;
+            this.selectedCell = -1;
+        }
+    }
+
+    getNextMutable(startCell) {
+        for (let i = startCell + 1; i < this.rows * this.cols; i++) {
+            if (this.cells[i].mutable) {
+                return i;
+            }
+        }
+
+        for (let i = 0; i < startCell; i++) {
+            if (this.cells[i].mutable) {
+                return i;
+            }
         }
     }
 
@@ -212,8 +256,8 @@ class VisualSudokuBoard extends SudokuBoard {
         }
     }
 
-    generateCell(x, y, initialValue) {
-        return new VisualCell(x, y, initialValue, this.style);
+    generateCell(x, y, z, initialValue) {
+        return new VisualCell(x, y, z, initialValue, this.style);
     }
 
     generateStructure() {
