@@ -1,11 +1,6 @@
 /// <reference path="typescript/p5.global-mode.d.ts" />
 'use strict';
 
-const POSSIBLE_VALUES = [
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'
-];
-
 class VisualCell extends Cell {
     constructor(x, y, z, initialValue = 0, style) {
         super(x, y, z, initialValue);
@@ -51,14 +46,6 @@ class VisualSudokuBoard extends SudokuBoard {
         
         this.style = this.defaultStyle();
         this.overrideStyle(styleOptions);
-
-        if (cols <= POSSIBLE_VALUES.length && rows <= POSSIBLE_VALUES.length) {
-            const valueRange = (cols > rows) ? cols : rows;
-            this.possibleValues = POSSIBLE_VALUES.slice(0, valueRange);
-        } else {
-            this.possibleValues = [];
-        }
-
     }
 
     defaultStyle() {
@@ -246,13 +233,6 @@ class VisualSudokuBoard extends SudokuBoard {
             
             // reset strokeCap to default, just in case.
             strokeCap(ROUND);
-        }
-    }
-
-    validValues(list) {
-        this.possibleValues = [];
-        for (let key in list) {
-            this.possibleValues.push(key.toUpperCase());
         }
     }
 

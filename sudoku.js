@@ -37,12 +37,24 @@ class SudokuBoard {
         this.cols = cols;
         this.rows = rows;
 
+        const POSSIBLE_VALUES = [
+            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'
+        ];
+
         if (colSections > cols || rowSections > rows) {
             throw 'Need less sections than cols/rows - don\'t divide by 0';
         }
 
         if (colSections < 1 || rowSections < 1) {
             throw 'Need at least one section for columns and rows - don\'t divide by 0';
+        }
+
+        if (cols <= POSSIBLE_VALUES.length && rows <= POSSIBLE_VALUES.length) {
+            const valueRange = (cols > rows) ? cols : rows;
+            this.possibleValues = POSSIBLE_VALUES.slice(0, valueRange);
+        } else {
+            this.possibleValues = [];
         }
 
         this.colDivideEvery = Math.floor(cols / colSections);
@@ -133,6 +145,13 @@ class SudokuBoard {
                     this.cells[i].value = "";
                 }
             }
+        }
+    }
+
+    validValues(list) {
+        this.possibleValues = [];
+        for (let key in list) {
+            this.possibleValues.push(key.toUpperCase());
         }
     }
 }
