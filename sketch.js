@@ -1,7 +1,7 @@
 /// <reference path="typescript/p5.global-mode.d.ts" />
 'use strict';
 
-let sudokuBoard = new VisualSudokuBoard(9, 9, 3, 3, {'globalOffsetX': 10, 'globalOffsetY': 10});
+let sudokuBoard = new VisualSudokuBoard(9,9,3,3, {'globalOffsetX': 10, 'globalOffsetY': 10});
 
 function setup() {
     createCanvas(1000, 800);

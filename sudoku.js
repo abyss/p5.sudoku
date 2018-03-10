@@ -32,12 +32,21 @@ class Cell {
 }
 
 class SudokuBoard {
-    constructor(cols, rows, columnDivideEvery, rowDivideEvery) {
+    constructor(cols, rows, colSections = 1, rowSections = 1) {
         this.cells = [];
         this.cols = cols;
         this.rows = rows;
-        this.columnDivideEvery = columnDivideEvery;
-        this.rowDivideEvery = rowDivideEvery;
+
+        if (colSections > cols || rowSections > rows) {
+            throw 'Need less sections than cols/rows - don\'t divide by 0';
+        }
+
+        if (colSections < 1 || rowSections < 1) {
+            throw 'Need at least one section for columns and rows - don\'t divide by 0';
+        }
+
+        this.colDivideEvery = Math.floor(cols / colSections);
+        this.rowDivideEvery = Math.floor(rows / rowSections);
     }
 
     generateCell(x, y, z, initialValue) {
@@ -46,11 +55,13 @@ class SudokuBoard {
 
     generateStructure() {
         this.cells = [];
+        let colSections = this.cols / this.colDivideEvery;
 
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
                 // i = x + (y * this.cols);
-                let z = 0; // TODO: this will store the group number this cell is in
+
+                let z = floor(x / this.colDivideEvery) + (floor(y / this.rowDivideEvery) * colSections);
                 this.cells.push(this.generateCell(x, y, z));
             }
         }
@@ -82,9 +93,8 @@ class SudokuBoard {
                 }
             }
 
-            if (this.cells.length !== this.rows * this.cols) {
-                generateStructure();
-            }
+            // out with the old, in with the new!
+            generateStructure();
 
             for (let y = 0; y < this.rows; y++) {
                 for (let x = 0; x < this.cols; x++) {
@@ -109,6 +119,9 @@ class SudokuBoard {
                 throw 'Incorrect Board Length';
             }
 
+            // out with the old, in with the new!
+            generateStructure();
+            
             for (let i = 0; i < length; i++) {
 
                 // need to make it mutable, incase previously initialized

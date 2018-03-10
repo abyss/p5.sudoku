@@ -8,7 +8,7 @@ const POSSIBLE_VALUES = [
 
 class VisualCell extends Cell {
     constructor(x, y, z, initialValue = 0, style) {
-        super(x, y, z, initialValue = 0);
+        super(x, y, z, initialValue);
         this.style = style;
 
         this.visualX = 0;
@@ -44,8 +44,8 @@ class VisualCell extends Cell {
 }
 
 class VisualSudokuBoard extends SudokuBoard {
-    constructor(cols, rows, columnDivideEvery, rowDivideEvery, styleOptions) {
-        super(cols, rows, columnDivideEvery, rowDivideEvery);
+    constructor(cols, rows, colSections = 1, rowSections = 1, styleOptions) {
+        super(cols, rows, colSections, rowSections);
 
         this.selectedCell = -1; // nothing selected
         
@@ -211,12 +211,12 @@ class VisualSudokuBoard extends SudokuBoard {
             stroke(borderColor);
             strokeWeight(dividerSpacing);
 
-            let columnSections = (this.cols / this.columnDivideEvery);
+            let colSections = (this.cols / this.colDivideEvery);
             let rowSections = (this.rows / this.rowDivideEvery);
             // all column lines
-            for (let i = 1; i < columnSections; i++) {
+            for (let i = 1; i < colSections; i++) {
                 
-                let x1 = offsetX + (this.columnDivideEvery * i * cellSize) + (borderSize * i) + (dividerSpacing * (i - 1)) - floor(borderSize / 2) + floor(dividerSpacing / 2);
+                let x1 = offsetX + (this.colDivideEvery * i * cellSize) + (borderSize * i) + (dividerSpacing * (i - 1)) - floor(borderSize / 2) + floor(dividerSpacing / 2);
                 
                 let y1 = offsetY - floor(borderSize / 2) + floor(dividerSpacing / 2);
                 
@@ -237,7 +237,7 @@ class VisualSudokuBoard extends SudokuBoard {
 
                 // let y1 = offsetY + (this.rowDivideEvery * i * cellSize) + ((regularBorder + dividerSpacing) * i) - regularBorder + floor((regularBorder - 1)/2) - floor((dividerSpacing - 1)/2); // functionally the same as above ¯\_(ツ)_/¯
 
-                let x2 = offsetX + (this.cols * cellSize) + (borderSize * columnSections) + (dividerSpacing * (columnSections - 2)) - floor(borderSize / 2) + floor(dividerSpacing / 2);
+                let x2 = offsetX + (this.cols * cellSize) + (borderSize * colSections) + (dividerSpacing * (colSections - 2)) - floor(borderSize / 2) + floor(dividerSpacing / 2);
 
                 let y2 = y1;
 
@@ -280,7 +280,7 @@ class VisualSudokuBoard extends SudokuBoard {
                     // reset offsetX every left column
                     offsetX = this.style.globalOffsetX;
                 } else {
-                    if (x % this.columnDivideEvery === 0) {
+                    if (x % this.colDivideEvery === 0) {
                         offsetX += this.style.dividerSpacing + this.style.borderSize;
                     }
                 }
