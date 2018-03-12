@@ -121,8 +121,11 @@ class VisualSudokuBoard extends SudokuBoard {
             browserIgnore = true;
         }
 
+        // TODO: Arrow Keys
+        // TODO: NumPad?!
+
         // keyPressed() doesn't differentiate between upper and lower. ideal!
-        if (this.possibleValues.indexOf(key) > -1) {
+        if (this.validValues.indexOf(key) > -1) {
             this.forEachCell((cell) => {
                 if (cell.selected && cell.mutable) {
                     cell.value = key;
@@ -144,18 +147,19 @@ class VisualSudokuBoard extends SudokuBoard {
     selectCell(x, y = -1) {
         // if only x is provided, use it as the cell's index
         // otherwise use x, y
-        
-        this.unselectCell();
+        if (typeof x !== 'undefined') {
+            this.unselectCell();
 
-        let i;
-        if (y < 0) {
-            i = x;
-        } else {
-            i = (this.cols * y) + x;
+            let i;
+            if (y < 0) {
+                i = x;
+            } else {
+                i = (this.cols * y) + x;
+            }
+    
+            this.cells[i].selected = true;
+            this.selectedCell = i;
         }
-
-        this.cells[i].selected = true;
-        this.selectedCell = i;
     }
 
     unselectCell() {
