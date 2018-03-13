@@ -39,6 +39,12 @@ class Cell {
 
         this.mutable = false;
     }
+
+    reset() {
+        this.solved = false;
+        this.mutable = true;
+        this.value = "";
+    }
 }
 
 class SudokuBoard {
@@ -87,8 +93,6 @@ class SudokuBoard {
 
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
-                // i = x + (y * this.cols);
-
                 let z = Math.floor(x / this.colDivideEvery) + (Math.floor(y / this.rowDivideEvery) * colSections);
                 let i = (this.cells.push(this.generateCell(x, y, z))) - 1;
                 this.cells[i].possibleValues = this.validValues.slice();
@@ -96,7 +100,10 @@ class SudokuBoard {
         }
     }
     
-    setCellPossibilities() {
+    searchCellPossibilities() {
+        let bestCell = -1;
+        let bestScore = -1;
+
         for (let i = 0; i < this.cells.length; i++) {
             let cell = this.cells[i];
 
@@ -110,27 +117,47 @@ class SudokuBoard {
                         cell.possibleValues = cell.possibleValues.filter(val => val !== checkCell.value);
                     }
                 });
+
+                if (bestScore < 0 || cell.possibleValues.length < bestScore) {
+                    bestCell = cell;
+                }
             }
         }
+
+        return bestCell;
     }
-    
+
     attemptGeneration() {
         this.generateStructure();
 
         let remainingCells = this.cells.slice(); // shallow copy array, keep cells reference
-
         while (remainingCells.length > 0) {
-            let lowestNum = []; // array of all remaining possible value lengths
+            
+            let lowestNumber = -1;
+            let lowestCells = [];
+            
             for (let i = 0; i < remainingCells.length; i++) {
-                lowestNum.push(remainingCells[i].possibleValues.length);
+                let cell = remainingCells[i];
+                cell.rcIndex = i; // fill cells with rcIndex for later use
+
+                // inserted searchCellPossibilities() for efficiency
+                this.forEachCell((checkCell) => {
+                    if (checkCell.solved && (checkCell.x === cell.x || checkCell.y === cell.y || checkCell.z === cell.z)) {
+                        cell.possibleValues = cell.possibleValues.filter(val => val !== checkCell.value);
+                    }
+                });
+
+                if (lowestNumber < 0 || cell.possibleValues.length < lowestNumber) {
+                    lowestNumber = cell.possibleValues.length;
+                    lowestCells = [cell];
+                } else if (cell.possibleValues.length === lowestNumber) {
+                    lowestCells.push(cell);
+                }
             }
 
-            let min = Math.min(...lowestNum);
-            let lowest = remainingCells.filter(lowCell => lowCell.possibleValues.length === min);
 
-            let randomLowestCell = Math.floor(Math.random() * lowest.length);
-            let cell = lowest[randomLowestCell];
-            remainingCells = remainingCells.filter(rCell => rCell !== cell);
+            let cell = lowestCells[randomIndex(lowestCells)];
+            remainingCells.splice(cell.rcIndex, 1);
 
             if (cell.possibleValues.length < 1) {
                 return false; // hit a dead end. restart.
@@ -138,12 +165,9 @@ class SudokuBoard {
 
             if (!cell.solved) {
                 // chose a random value to set it to
-                let randomValue = cell.possibleValues[Math.floor(Math.random() * cell.possibleValues.length)];
+                let randomValue = cell.possibleValues[randomIndex(cell.possibleValues)];
                 cell.setSolved(randomValue);
             }
-
-            // this could be minorly optimized to only do this for all remainingCells instead of the entire cells array
-            this.setCellPossibilities();
         }
 
         return true;
@@ -153,12 +177,146 @@ class SudokuBoard {
         let i = 0;
         let failure = true;
 
-        while (failure) {
+        while (failure && i < 5) {
             failure = !this.attemptGeneration();
             i++;
         }
 
         return i;
+    }
+
+    recursiveSmartGenerator() {
+        if (this.rows === 9 && this.cols === 9 && this.colDivideEvery === 3 && this.rowDivideEvery === 3) {
+            this.generateStructure();
+            
+            this.smartSectionOne();
+            this.smartSectionTwo();
+            this.smartSectionThree();
+            this.smartColumnOne();
+            return !this.smartRecursiveRest();
+        } else {
+            throw 'Can only use fancyGenerator() on Standard 9x9 (3x3 Sections) Sudoku';
+        }
+    }
+    
+    // randomly determines first section
+    smartSectionOne() {
+        let possibleValues = this.validValues.slice();
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                let i = randomIndex(possibleValues);
+                let chosenValue = possibleValues[i];
+                possibleValues.splice(i, 1);
+                this.cells[x + y * this.cols].setSolved(chosenValue);
+            }
+        }
+    }
+
+    smartSectionTwo() {
+        let used = [[], [], []];
+        let chosen = [[], [], []];
+        let set_x = [];
+        let set_y = [];
+
+        // Gather used values from first section into rows
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                used[y].push(this.cells[x + y * this.cols].value);
+            }
+        }
+
+        // Chose values for top row of section two
+        set_x = used[1].concat(used[2]);
+        for (let x = 0; x < 3; x++) {
+            let i = randomIndex(set_x);
+            chosen[0].push(set_x[i]);
+            set_x.splice(i, 1);
+        }
+
+        // Chose values for middle row of section two, as long as we can
+        set_x = used[0].concat(used[2]).filter(x => !chosen[0].includes(x));
+        set_y = used[0].concat(used[1]).filter(x => !chosen[0].includes(x));
+
+        // Until we run out of values for row 3, fill row 2
+        while (set_y.length > 3) {
+            let i = randomIndex(set_x);
+            chosen[1].push(set_x[i]);
+            set_y = set_y.filter(z => z !== set_x[i]); // remove from row 3 as well
+            set_x.splice(i, 1);
+        }
+
+        // No choice for the remaining
+        chosen[1] = chosen[1].concat(set_x.filter(z => !set_y.includes(z)));
+        chosen[2] = set_y;
+
+        // Permute values into each row of section 2
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                let i = randomIndex(chosen[y]);
+                this.cells[x + y * this.cols + 3].setSolved(chosen[y][i]);
+                chosen[y].splice(i, 1);
+            }
+        }
+    }
+
+    smartSectionThree() {
+        for (let y = 0; y < 3; y++) {
+            let possibleValues = this.validValues.slice();
+            
+            // eliminate already used values in this row
+            for (let x = 0; x + 3 < 9; x++) {
+                possibleValues = possibleValues.filter(z => z !== this.cells[x + y * this.cols].value);
+            }
+
+            // permute remaining values into the row
+            for (let x = 0; x < 3; x++) {
+                let i = randomIndex(possibleValues);
+                this.cells[x + y * this.cols + this.cols - 3].setSolved(possibleValues[i]);
+                possibleValues.splice(i, 1);
+            }
+        }
+    }
+
+    smartColumnOne() {
+        let possibleValues = this.validValues.slice();
+
+        for (let y = 0; y < 3; y++) {
+            possibleValues = possibleValues.filter(z => z !== this.cells[y * this.cols].value);
+        }
+
+        for (let y = 3; y < 9; y++) {
+            let i = randomIndex(possibleValues);
+            this.cells[y * this.cols].setSolved(possibleValues[i]);
+            possibleValues.splice(i, 1);
+        }
+    }
+
+    smartRecursiveRest() {
+        let cell = this.searchCellPossibilities();
+
+        if (cell === -1) {
+            return 0;
+        }
+
+        let possibleValues;
+        if (cell.possibleValues) {
+            possibleValues = cell.possibleValues.slice();
+        } else {
+            possibleValues = [];
+        }
+
+        while (possibleValues.length) {
+            let i = Math.floor(Math.random() * cell.possibleValues.length);
+            cell.setSolved(possibleValues[i]);
+            possibleValues.splice(i, 1);
+
+            if (!this.smartRecursiveRest()) {
+                return 0;
+            }
+        }
+
+        cell.reset();
+        return -1;
     }
 
     forEachCell(callback) {
@@ -221,7 +379,7 @@ class SudokuBoard {
             }
 
             // out with the old, in with the new!
-            generateStructure();
+            this.generateStructure();
             
             for (let i = 0; i < length; i++) {
 

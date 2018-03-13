@@ -106,32 +106,57 @@ class VisualSudokuBoard extends SudokuBoard {
     keyPressed() {
         // returning false makes the browser ignore it incase of other functionality        
         let browserIgnore = false;
+        let selectedCell = this.cells[this.selectedCell];
 
         if (keyCode === BACKSPACE || keyCode === DELETE) {
-            this.forEachCell((cell) => {
-                if (cell.selected && cell.mutable) {
-                    cell.value = '';
-                }
-            });
+            if (selectedCell && selectedCell.selected && selectedCell.mutable) {
+                selectedCell.value = '';
+            }
             browserIgnore = true;
         }
 
         if (keyCode === TAB) {
-            this.selectCell(this.getNextMutable(this.selectedCell));
+            this.selectCell(this.getNextMutable(this.selectedCell + 1));
             browserIgnore = true;
         }
 
-        // TODO: Arrow Keys
-        // TODO: NumPad?!
+        if (keyCode === UP_ARROW) {
+            if (selectedCell) {
+                this.selectCell(selectedCell.x, selectedCell.y - 1);
+                browserIgnore = true;
+            }
+        }
+
+        if (keyCode === DOWN_ARROW) {
+            if (selectedCell) {
+                this.selectCell(selectedCell.x, selectedCell.y + 1);
+                browserIgnore = true;
+            }
+        }
+
+        if (keyCode === LEFT_ARROW) {
+            if (selectedCell) {
+                this.selectCell(selectedCell.x - 1, selectedCell.y);
+                browserIgnore = true;
+            }
+        }
+
+        if (keyCode === RIGHT_ARROW) {
+            if (selectedCell) {
+                this.selectCell(selectedCell.x + 1, selectedCell.y);
+                browserIgnore = true;
+            }
+        }
+
+        // TODO: NumPad - keyCode 96 = 0, 105 = 9
 
         // keyPressed() doesn't differentiate between upper and lower. ideal!
         if (this.validValues.indexOf(key) > -1) {
-            this.forEachCell((cell) => {
-                if (cell.selected && cell.mutable) {
-                    cell.value = key;
-                }
-            });
-            browserIgnore = true;
+            if (selectedCell && selectedCell.selected && selectedCell.mutable) {
+                selectedCell.value = key;
+                console.log(keyCode);
+                browserIgnore = true;
+            }
         }
 
         // check for browser ignoring behavior
@@ -144,19 +169,21 @@ class VisualSudokuBoard extends SudokuBoard {
         }
     }
 
-    selectCell(x, y = -1) {
+    selectCell(x, y) {
         // if only x is provided, use it as the cell's index
         // otherwise use x, y
         if (typeof x !== 'undefined') {
             this.unselectCell();
 
             let i;
-            if (y < 0) {
-                i = x;
+            if (typeof y === 'undefined') {
+                // wrap-around protection
+                i = x + this.cols % this.cols;
             } else {
-                i = (this.cols * y) + x;
+                // wrap-around protection
+                i = (this.cols * ((y + this.rows) % this.rows)) + ((x + this.cols) % this.cols);
             }
-    
+
             this.cells[i].selected = true;
             this.selectedCell = i;
         }
@@ -170,7 +197,7 @@ class VisualSudokuBoard extends SudokuBoard {
     }
 
     getNextMutable(startCell) {
-        for (let i = startCell + 1; i < this.rows * this.cols; i++) {
+        for (let i = startCell; i < this.rows * this.cols; i++) {
             if (this.cells[i].mutable) {
                 return i;
             }
