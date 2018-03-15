@@ -148,13 +148,21 @@ class VisualSudokuBoard extends SudokuBoard {
             }
         }
 
-        // TODO: NumPad - keyCode 96 = 0, 105 = 9
+        // NumPad - keyCode 96 = 0, 105 = 9
+        if (keyCode >= 96 && keyCode <= 105) {
+            let numpadKey = (keyCode - 96).toString();
+            if (this.validValues.indexOf(numpadKey) > -1) {
+                if (selectedCell && selectedCell.selected && selectedCell.mutable) {
+                    selectedCell.value = numpadKey;
+                    browserIgnore = true;
+                }
+            }
+        }
 
         // keyPressed() doesn't differentiate between upper and lower. ideal!
         if (this.validValues.indexOf(key) > -1) {
             if (selectedCell && selectedCell.selected && selectedCell.mutable) {
                 selectedCell.value = key;
-                console.log(keyCode);
                 browserIgnore = true;
             }
         }
