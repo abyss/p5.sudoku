@@ -52,6 +52,7 @@ class SudokuBoard {
         this.cells = [];
         this.cols = cols;
         this.rows = rows;
+        this.difficulty = 0;
 
         const VALID_VALUES = [
             '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
@@ -184,6 +185,29 @@ class SudokuBoard {
 
         return i;
     }
+
+    solver() {
+        let cell = this.searchCellPossibilities();
+        if (cell === -1) {
+            // We've won!
+            return true;
+        } else {
+            let possibilities = cell.possibleValues.slice();
+            for (let i = 0; i < possibilities.length; i++) {
+                cell.reset();
+                cell.setSolved(possibilities[i]);
+                if (this.solver()) {
+                    return true;
+                }
+            }
+        }
+
+        // Backtrack
+        this.difficulty++;
+        cell.reset();
+        return false;
+    }
+
 
     recursiveSmartGenerator() {
         if (this.rows === 9 && this.cols === 9 && this.colDivideEvery === 3 && this.rowDivideEvery === 3) {
@@ -360,13 +384,10 @@ class SudokuBoard {
                     // current index of this cell in our board
                     let i = x + (y * this.cols);
 
-                    // need to make it mutable, incase previously initialized
-                    this.cells[i].mutable = true;
                     if (initialBoard[y][x]) {
-                        this.cells[i].value = initialBoard[y][x];
-                        this.cells[i].mutable = false;
+                        this.cells[i].setSolved(initialBoard[y][x]);
                     } else {
-                        this.cells[i].value = '';
+                        this.cells[i].reset();
                     }
                 }
             }
@@ -382,14 +403,10 @@ class SudokuBoard {
             this.generateStructure();
             
             for (let i = 0; i < length; i++) {
-
-                // need to make it mutable, incase previously initialized
-                this.cells[i].mutable = true;
                 if (initialBoard[i]) {
-                    this.cells[i].value = initialBoard[i];
-                    this.cells[i].mutable = false;
+                    this.cells[i].setSolved(initialBoard[i]);
                 } else {
-                    this.cells[i].value = "";
+                    this.cells[i].reset();
                 }
             }
         }
