@@ -101,6 +101,61 @@ class SudokuBoard {
         }
     }
     
+    generateError(cell, msg) {
+        let err = {
+            'msg': `Cell ${cell.x}, ${cell.y} - ${msg}`,
+            'cell': cell,
+            'location': {
+                'x': cell.x,
+                'y': cell.y,
+                'z': cell.z
+            }
+        }
+
+        return err;
+    }
+
+    checkBoard() {
+        let errors = [];
+
+        for (let i = 0; i < this.cells.length; i++) {
+            let cell = this.cells[i];
+
+            if (!cell.value) {
+                errors.push(this.generateError(cell, 'isn\'t filled.'));
+                continue;
+            }
+
+            cell.possibleValues = this.validValues.slice();
+            this.forEachCell((checkCell) => {
+                if (cell === checkCell) {
+                    return;
+                } else if (checkCell.x === cell.x || checkCell.y === cell.y || checkCell.z === cell.z) {
+                    cell.possibleValues = cell.possibleValues.filter(val => val !== checkCell.value);
+                }
+            });
+
+            if (cell.possibleValues.length < 1) {
+                errors.push(this.generateError(cell, 'has no correct values.'));
+                continue;
+            } else if (cell.possibleValues.length === 1) {
+                if (cell.possibleValues[0] !== cell.value) {
+                    errors.push(this.generateError(cell, `incorrect value.`));
+                    continue;
+                }
+            } else {
+                errors.push(this.generateError(cell, 'has too many correct values.'));
+                continue;
+            }
+        }
+
+        if (errors.length > 0) {
+            return errors;
+        } else {
+            return;
+        }
+    }
+
     searchCellPossibilities() {
         let bestCell = -1;
         let bestScore = -1;
